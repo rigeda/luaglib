@@ -82,6 +82,7 @@ static int larger3(int a,int b,int c){
             return c;
 }
 
+/*
 // Function to check whether a coordinate in visited exists
 static int visitDone(struct visited *vst,int x,int y){
     while(vst->prev)
@@ -95,6 +96,7 @@ static int visitDone(struct visited *vst,int x,int y){
     }   // while (vst) ends here
     return 0;
 }
+*/
 
 // Breadth First Search algorithm implementation for Lua-GL
 static int BFS(lua_State *L) {
@@ -124,23 +126,29 @@ maxY: 	(OPTIONAL) maximum y coordinate allowed
     destY = lua_tointeger(L,5);
     stepX = lua_tointeger(L,6);
     stepY = lua_tointeger(L,7);
+    printf("Got srcX, srcY,destX,destY,stepX and stepY\n");
     if(lua_isinteger(L,8))
         minX = lua_tointeger(L,8);
-    else
+    else{
         minX = smaller3(rm->minX - stepX,destX-stepX,srcX-stepX);
+    }
     if(lua_isinteger(L,9))
         minY = lua_tointeger(L,9);
-    else
+    else{
         minY = smaller3(rm->minY - stepY,destY-stepY,srcY-stepY);
+    }
     if(lua_isinteger(L,10))
         maxX = lua_tointeger(L,10);
-    else
+    else{
         maxX = larger3(rm->maxX + stepX,destX+stepX,srcX+stepX);
+    }
     if(lua_isinteger(L,11))
         maxY = lua_tointeger(L,11);
-    else
+    else{
         maxY = larger3(rm->maxY + stepY,destY+stepY,srcY+stepY);
+    }
 
+	printf("Align minX,maxX,minY,maxY\n");
     // align minX,maxX,minY,maxY with the stepX and stepY from srcX and srcY
     minX = srcX-((srcX-minX)/stepX)*stepX;    // integer arithmetic will align minX
     maxX = srcX+((maxX-srcX)/stepX)*stepX;
@@ -160,6 +168,7 @@ maxY: 	(OPTIONAL) maximum y coordinate allowed
 
     printf("Create visited structure with r=%d and c=%d...",r,c);
     int *vst = (int *)malloc(r * c * sizeof(int));
+    int *vst1;
     for(int i = 0;i<r;i++)
         for(int j = 0;j<c;j++)
             *(vst+i*c+j) = 0;
@@ -180,27 +189,32 @@ maxY: 	(OPTIONAL) maximum y coordinate allowed
     struct queue *qtop;
     struct queue *qbot;
     struct queue *qtemp;
-    char *c1;
+    char *c1;   // To store the current shortest path
     char *c2;
+    int dist,dist2; // To store the shortest distance so far
     // Create a 1st item in the queue at spot srcX and srcY
     qtop = (struct queue *)malloc(sizeof(struct queue));
     qbot = qtop;
     qtop->x = srcX;
     qtop->y = srcY;
+    qtop->next = 0;
     qtop->c = (char *)malloc(sizeof(char));
-    c1 = qtop->c;
-    qtop->clen = 1;
-    //qtop->c[0] = '\0';
+    c1 = (char *)malloc(sizeof(char));
     c1[0] = '\0';
+    //c1 = qtop->c;
+    qtop->clen = 1;
+    qtop->c[0] = '\0';
+    //c1[0] = '\0';
+    dist = abs(destX-srcX) + abs(destY-srcY);
     printf("DONE\n");
 
+    int nxtX,nxtY;
     // now start the BFS loop
     printf("Start the BFS loop\n");
     while(qtop){
         if(qtop->x == destX && qtop->y == destY){
             // Free all the memory here
-            printf("Reached destination. Start cleanup...");
-            lua_pushinteger(L,0);   // 0 distance to destination
+            //printf("Reached destination. Start cleanup...");
             lua_pushstring(L,qtop->c);
             // Clear the queue
             while(qtop){
@@ -210,53 +224,66 @@ maxY: 	(OPTIONAL) maximum y coordinate allowed
                 qtop = qtemp;
             }   // while qtop ends here
             free(vst);
-            printf("DONE\n");
-            return 2;
+            free(c1);
+            //printf("DONE\n");
+            return 1;
         }
         // Add the adjacent cells int he que
-        int nxtX,nxtY;
         for(int i=0;i<4;i++){
             // get coordinates for the ith adjacent cell
             nxtX = qtop->x + delX[i];
             nxtY = qtop->y + delY[i];
-            //printf("Check nxtX=%d and nxtY=%d\n",nxtX,nxtY);
+            printf("Check nxtX=%d and nxtY=%d\n",nxtX,nxtY);
+            vst1 = vst+(nxtY+offy)/stepY*c+(nxtX+offx)/stepX;
             if(nxtX >= minX && nxtX <= maxX && nxtY >= minY && nxtY <= maxY &&
-              validateStep(rm,qtop->x,qtop->y,nxtX,nxtY,destX,destY) && (*(vst+(nxtY+offy)/stepY*c+(nxtX+offx)/stepX)==0)){
+              validateStep(rm,qtop->x,qtop->y,nxtX,nxtY,destX,destY) && (*vst1==0)){
 				// mark cell as visited and enqueue it
-				//printf("Create new queue for coordinate x=%d,y=%d...",nxtX,nxtY);
-				*(vst+(nxtY+offy)/stepY*c+(nxtX+offx)/stepX) = 1;
+				printf("Create new queue item for coordinate x=%d,y=%d...",nxtX,nxtY);
+				*vst1 = 1;
 				qtemp = (struct queue *)malloc(sizeof(struct queue));
 				qbot->next = qtemp;
 				qtemp->clen = qtop->clen + 1;
 				// copy the path string
-				//printf("Create new string of len=%d..",qtemp->clen);
+				printf("Create new string of len=%d..",qtemp->clen);
 				qtemp->c = (char *)malloc((qtemp->clen)*sizeof(char));
-				c1 = qtemp->c;
-				c2 = qtop->c;
+				c2 = qtemp->c;
+				//c1 = qtemp->c
+				//c2 = qtop->c;
 				//printf("Copy String...");
 				for(int j=0;j<qtop->clen-1;j++){
                     //printf("j=%d,c2[j]=%c\n",j,c2[j]);
-                    c1[j] = c2[j];
+                    c2[j]=qtop->c[j];
+                    //c1[j] = c2[j];
 				}
                 //printf("done copy...");
 				qbot = qtemp;
 				qbot->next = 0;
 				qbot->x = nxtX;
 				qbot->y = nxtY;
-                c1[qbot->clen-2] = stepStr[i];
-                c1[qbot->clen-1] = '\0';
-                //printf("added x=%d,y=%d,c=%s,clen=%d,%d",nxtX,nxtY,qbot->c,strlen(qbot->c),qbot->clen);
+                //c1[qbot->clen-2] = stepStr[i];
+                //c1[qbot->clen-1] = '\0';
+                c2[qbot->clen-2] = stepStr[i];
+                c2[qbot->clen-1] = '\0';
+                dist2 = abs(destX-nxtX) + abs(destY-nxtY);
+                if (dist2 < dist){
+                    dist = dist2;
+                    free(c1);
+                    c1 = (char *)malloc((qtemp->clen)*sizeof(char));
+                    strcpy(c1,c2);
+                }
+                printf("added x=%d,y=%d,c=%s,clen=%d,%d",nxtX,nxtY,qbot->c,strlen(qbot->c),qbot->clen);
                 //getchar();
-                //printf("DONE,i=%d\n",i);
+                printf("DONE,i=%d\n",i);
             }   // if(nxtX >= minX && nxtX <= maxX ends
         }   // for i ends here
-        //printf("Free qtop...");
+        printf("Free qtop...");
         qtemp = qtop;
         qtop = qtop->next;
+        free(qtemp->c);
         free(qtemp);
-        //printf("DONE\n");
+        printf("DONE,qtop=%p\n",qtop);
     }   // while (qtop) ends here
-    printf("Free all memory...");
+    printf("No path found Free all memory...");
 
     // Free all the memory here
     // Clear the queue
@@ -267,11 +294,14 @@ maxY: 	(OPTIONAL) maximum y coordinate allowed
         qtop = qtemp;
     }   // while qtop ends here
     // Clear the visited
+    printf("Que freed...");
     free(vst);
-    printf("DONE\n");
-    lua_pushnil(L);   // 0 distance to destination
-    lua_pushstring(L,"Cannot reach destination");
-    return 2;
+    printf("vst freed...");
+    //printf("DONE\n");
+    lua_pushstring(L,c1);
+    free(c1);
+    printf("c1 freed...DONE\n");
+    return 1;
 }
 
 /*
