@@ -117,7 +117,7 @@ maxY: 	(OPTIONAL) maximum y coordinate allowed
     // call is made BFS(rM,srcX,srcY,destX,destY,stepX,stepY,minX,minY,maxX,maxY)
     struct routingMatrix *rm;
     rm = (struct routingMatrix*)lua_touserdata(L,1);	// routing matrix userdata is the 1st argument
-    printf("Got the routing matrix\n");
+    //printf("Got the routing matrix\n");
 
     int srcX,srcY,destX,destY,stepX,stepY,minX,minY,maxX,maxY;
     srcX = lua_tointeger(L,2);
@@ -126,7 +126,7 @@ maxY: 	(OPTIONAL) maximum y coordinate allowed
     destY = lua_tointeger(L,5);
     stepX = lua_tointeger(L,6);
     stepY = lua_tointeger(L,7);
-    printf("Got srcX, srcY,destX,destY,stepX and stepY\n");
+    //printf("Got srcX, srcY,destX,destY,stepX and stepY\n");
     if(lua_isinteger(L,8))
         minX = lua_tointeger(L,8);
     else{
@@ -148,14 +148,14 @@ maxY: 	(OPTIONAL) maximum y coordinate allowed
         maxY = larger3(rm->maxY + stepY,destY+stepY,srcY+stepY);
     }
 
-	printf("Align minX,maxX,minY,maxY\n");
+	//printf("Align minX,maxX,minY,maxY\n");
     // align minX,maxX,minY,maxY with the stepX and stepY from srcX and srcY
     minX = srcX-((srcX-minX)/stepX)*stepX;    // integer arithmetic will align minX
     maxX = srcX+((maxX-srcX)/stepX)*stepX;
     minY = srcY-((srcY-minY)/stepY)*stepY;
     maxY = srcY+((maxY-srcY)/stepY)*stepY;
 
-    printf("Got the parameters srcX=%d,srcY=%d,destX=%d,destY=%d,stepX=%d,stepY=%d,minX=%d,minY=%d,maxX=%d,maxY=%d\n",srcX,srcY,destX,destY,stepX,stepY,minX,minY,maxX,maxY);
+    //printf("Got the parameters srcX=%d,srcY=%d,destX=%d,destY=%d,stepX=%d,stepY=%d,minX=%d,minY=%d,maxX=%d,maxY=%d\n",srcX,srcY,destX,destY,stepX,stepY,minX,minY,maxX,maxY);
     int delX[] = {-stepX,0,0,stepX};
     int delY[] = {0,-stepY,stepY,0};
     char stepStr[] = {'L','U','D','R'};
@@ -166,18 +166,18 @@ maxY: 	(OPTIONAL) maximum y coordinate allowed
     offx = -minX;
     offy = -minY;
 
-    printf("Create visited structure with r=%d and c=%d...",r,c);
+    //printf("Create visited structure with r=%d and c=%d...",r,c);
     int *vst = (int *)malloc(r * c * sizeof(int));
     int *vst1;
     for(int i = 0;i<r;i++)
         for(int j = 0;j<c;j++)
             *(vst+i*c+j) = 0;
-    printf("DONE\n");
+    //printf("DONE\n");
 
     // put the srcX,srcY in visited
     *(vst+(srcY+offy)/stepY*c+(srcX+offx)/stepX)=1;
 
-    printf("Create the queue structure...");
+    //printf("Create the queue structure...");
     // structure for the que
     struct queue{
         int x;
@@ -206,11 +206,11 @@ maxY: 	(OPTIONAL) maximum y coordinate allowed
     qtop->c[0] = '\0';
     //c1[0] = '\0';
     dist = abs(destX-srcX) + abs(destY-srcY);
-    printf("DONE\n");
+    //printf("DONE\n");
 
     int nxtX,nxtY;
     // now start the BFS loop
-    printf("Start the BFS loop\n");
+    //printf("Start the BFS loop\n");
     while(qtop){
         if(qtop->x == destX && qtop->y == destY){
             // Free all the memory here
@@ -233,18 +233,18 @@ maxY: 	(OPTIONAL) maximum y coordinate allowed
             // get coordinates for the ith adjacent cell
             nxtX = qtop->x + delX[i];
             nxtY = qtop->y + delY[i];
-            printf("Check nxtX=%d and nxtY=%d\n",nxtX,nxtY);
+            //printf("Check nxtX=%d and nxtY=%d\n",nxtX,nxtY);
             vst1 = vst+(nxtY+offy)/stepY*c+(nxtX+offx)/stepX;
             if(nxtX >= minX && nxtX <= maxX && nxtY >= minY && nxtY <= maxY &&
               validateStep(rm,qtop->x,qtop->y,nxtX,nxtY,destX,destY) && (*vst1==0)){
 				// mark cell as visited and enqueue it
-				printf("Create new queue item for coordinate x=%d,y=%d...",nxtX,nxtY);
+				//printf("Create new queue item for coordinate x=%d,y=%d...",nxtX,nxtY);
 				*vst1 = 1;
 				qtemp = (struct queue *)malloc(sizeof(struct queue));
 				qbot->next = qtemp;
 				qtemp->clen = qtop->clen + 1;
 				// copy the path string
-				printf("Create new string of len=%d..",qtemp->clen);
+				//printf("Create new string of len=%d..",qtemp->clen);
 				qtemp->c = (char *)malloc((qtemp->clen)*sizeof(char));
 				c2 = qtemp->c;
 				//c1 = qtemp->c
@@ -271,19 +271,19 @@ maxY: 	(OPTIONAL) maximum y coordinate allowed
                     c1 = (char *)malloc((qtemp->clen)*sizeof(char));
                     strcpy(c1,c2);
                 }
-                printf("added x=%d,y=%d,c=%s,clen=%d,%d",nxtX,nxtY,qbot->c,strlen(qbot->c),qbot->clen);
+                //printf("added x=%d,y=%d,c=%s,clen=%d,%d",nxtX,nxtY,qbot->c,strlen(qbot->c),qbot->clen);
                 //getchar();
-                printf("DONE,i=%d\n",i);
+                //printf("DONE,i=%d\n",i);
             }   // if(nxtX >= minX && nxtX <= maxX ends
         }   // for i ends here
-        printf("Free qtop...");
+        //printf("Free qtop...");
         qtemp = qtop;
         qtop = qtop->next;
         free(qtemp->c);
         free(qtemp);
-        printf("DONE,qtop=%p\n",qtop);
+        //printf("DONE,qtop=%p\n",qtop);
     }   // while (qtop) ends here
-    printf("No path found Free all memory...");
+    //printf("No path found Free all memory...");
 
     // Free all the memory here
     // Clear the queue
@@ -294,13 +294,13 @@ maxY: 	(OPTIONAL) maximum y coordinate allowed
         qtop = qtemp;
     }   // while qtop ends here
     // Clear the visited
-    printf("Que freed...");
+    //printf("Que freed...");
     free(vst);
-    printf("vst freed...");
+    //printf("vst freed...");
     //printf("DONE\n");
     lua_pushstring(L,c1);
     free(c1);
-    printf("c1 freed...DONE\n");
+    //printf("c1 freed...DONE\n");
     return 1;
 }
 
@@ -591,7 +591,13 @@ static int removeSegment(lua_State *L) {
     //printf("Got routing matrix\n");
 	// Get the pointer to the segment
 	lua_pushvalue(L,2); // Push the key on top of the stack
-	lua_gettable(L,LUA_REGISTRYINDEX);      // get the segment userdata from the registry
+	int type;
+	type = lua_gettable(L,LUA_REGISTRYINDEX);      // get the segment userdata from the registry
+	if(type==LUA_TNIL){
+        lua_pushnil(L);
+        lua_pushstring(L,"Cannot find segment structure in routing matrix.");
+        return 2;
+	}
 	struct seg *segment;
 	segment = (struct seg*)lua_touserdata(L,-1);	// Get the pointer to the segment
 	//printf("Got the segment pointer\n");
@@ -619,6 +625,73 @@ static int removeSegment(lua_State *L) {
 
 	free(segment);	// free the memory from the segment structure
     lua_pushboolean(L,1);
+    return 1;
+}
+
+// Top copy the coordinates in the given segment structure to a table on top of the stack
+static void copySegmentToTable(lua_State *L,struct seg* segment){
+    lua_newtable(L); //t = {}
+    lua_pushinteger(L,segment->x1);
+    lua_setfield(L,-2,"x1");    // t.x1 = segment->x1
+    lua_pushinteger(L,segment->y1);
+    lua_setfield(L,-2,"y1");    // t.y1 = segment->y1
+    lua_pushinteger(L,segment->x2);
+    lua_setfield(L,-2,"x2");    // t.x2 = segment->x2
+    lua_pushinteger(L,segment->y2);
+    lua_setfield(L,-2,"y2");    // t.y2 = segment->y2
+}
+
+// Returns the copy of the structure stored in the routing matrix for the given key
+static int getSegment(lua_State *L){
+	// parameters in lua passed like: function(rm,key)
+    struct routingMatrix *rm;
+    rm = (struct routingMatrix*)lua_touserdata(L,1);	// routing matrix userdata is the 1st argument
+    //printf("Got routing matrix\n");
+	// Get the pointer to the segment
+	lua_pushvalue(L,2); // Push the key on top of the stack
+	int type;
+	type = lua_gettable(L,LUA_REGISTRYINDEX);      // get the segment userdata from the registry
+	if(type==LUA_TNIL){
+        // No segment found from the key
+        lua_pushnil(L);
+        return 1;
+	}
+	// Something found
+	struct seg *segment;
+	segment = (struct seg*)lua_touserdata(L,-1);	// Get the pointer to the segment
+
+    struct seg * segs;
+    // Check hsegs first
+    segs = rm->hsegs;
+    int found = 0;
+    while(segs){
+        if (segs == segment){
+            found = 1;
+            break;
+        }
+        segs = segs->next;
+    }   // while (segs) ends here
+    if (found) {
+        // Create a copy of the segment in a Lua Table on top of the stack
+        copySegmentToTable(L,segment);
+        return 1;
+    }
+    // Check vsegs
+    segs = rm->vsegs;
+    while(segs){
+        if (segs == segment){
+            found = 1;
+            break;
+        }
+        segs = segs->next;
+    }   // while (segs) ends here
+    if (found) {
+        // Create a copy of the segment in a Lua Table on top of the stack
+        copySegmentToTable(L,segment);
+        return 1;
+    }
+    // No segment found from the key. Key must belong to blocking rectangle
+    lua_pushnil(L);
     return 1;
 }
 
@@ -669,7 +742,13 @@ static int removeBlockingRectangle(lua_State *L) {
     rm = (struct routingMatrix*)lua_touserdata(L,1);	// routing matrix userdata is the 1st argument
 	// Get the pointer to the segment
 	lua_pushvalue(L,2); // Push the key on top of the stack
-	lua_gettable(L,LUA_REGISTRYINDEX);      // get the blocking rectangle userdata from the registry
+	int type;
+	type = lua_gettable(L,LUA_REGISTRYINDEX);      // get the blocking rectangle userdata from the registry
+	if(type==LUA_TNIL){
+        lua_pushnil(L);
+        lua_pushstring(L,"Cannot find blocking rectangle structure in routing matrix.");
+        return 2;
+	}
 	struct seg *segment;
 	segment = (struct seg*)lua_touserdata(L,-1);	// Get the pointer to the segment
 	if(!segment->prev){
@@ -693,6 +772,46 @@ static int removeBlockingRectangle(lua_State *L) {
 
 	free(segment);	// free the memory from the segment structure
     lua_pushboolean(L,1);
+    return 1;
+}
+
+// Returns the copy of the structure stored in the routing matrix for the given key
+static int getBlockingRectangle(lua_State *L){
+	// parameters in lua passed like: function(rm,key)
+    struct routingMatrix *rm;
+    rm = (struct routingMatrix*)lua_touserdata(L,1);	// routing matrix userdata is the 1st argument
+    //printf("Got routing matrix\n");
+	// Get the pointer to the segment
+	lua_pushvalue(L,2); // Push the key on top of the stack
+	int type;
+	type = lua_gettable(L,LUA_REGISTRYINDEX);      // get the segment userdata from the registry
+	if(type==LUA_TNIL){
+        // No segment found from the key
+        lua_pushnil(L);
+        return 1;
+	}
+	// Something found
+	struct seg *segment;
+	segment = (struct seg*)lua_touserdata(L,-1);	// Get the pointer to the segment
+
+    struct seg * segs;
+    // Check blksegs structure
+    segs = rm->blksegs;
+    int found = 0;
+    while(segs){
+        if (segs == segment){
+            found = 1;
+            break;
+        }
+        segs = segs->next;
+    }   // while (segs) ends here
+    if (found) {
+        // Create a copy of the segment in a Lua Table on top of the stack
+        copySegmentToTable(L,segment);
+        return 1;
+    }
+    // No segment found from the key. Key must belong to horizontal or vertical segment
+    lua_pushnil(L);
     return 1;
 }
 
@@ -737,7 +856,13 @@ static int removePort(lua_State *L) {
     rm = (struct routingMatrix*)lua_touserdata(L,1);	// routing matrix userdata is the 1st argument
 	// Get the pointer to the port
 	lua_pushvalue(L,2); // Push the key on top of the stack
-	lua_gettable(L,LUA_REGISTRYINDEX);      // get the blocking rectangle userdata from the registry
+	int type;
+	type = lua_gettable(L,LUA_REGISTRYINDEX);      // get the blocking rectangle userdata from the registry
+	if(type==LUA_TNIL){
+        lua_pushnil(L);
+        lua_pushstring(L,"Cannot find port structure in routing matrix.");
+        return 2;
+	}
 	struct port *prt;
 	prt = (struct port*)lua_touserdata(L,-1);	// Get the pointer to the port
 	if(!prt->prev){
@@ -884,47 +1009,59 @@ static int validateStep(struct routingMatrix *rm,int x1,int y1,int x2,int y2,int
         // Returns 3 if p1 lies on p2 q2
         // Returns 4 if q1 lies on p2 q2
         // Returns 0 if no intersection
-        if (intersect && intersect > 2)	// 3,4,5 are not allowed i.e. crossing the blk segment (5), blk segment end lies on the step line (3,4)
+        if (intersect > 2)	// 3,4,5 are not allowed i.e. crossing the blk segment (5), blk segment end lies on the step line (3,4)
             return 0;   // return false
-        if (intersect) {	// case 1 and 2
+        if (intersect==2) {	// case 1 and 2
             // This has to be a port and final destination
             if (x2 == dstX && y2 == dstY && portExists(rm,x2,y2))
                 return 1;   // return true
             else
                 return 0;   // return false
+        }
+        else if(intersect==1){
+            return 1;   // p2 can lie on p1 q1 since p2 is the source. It was already allowed by the calling function
         }
         // Segment 2 is x1,y1 x2,y1 of blksegs
         intersect = doIntersect(segs->x1,segs->y1,segs->x2,segs->y1,x1,y1,x2,y2); // p1,q1,p2,q2
-        if(intersect && intersect > 2)	    // 3,4,5 are not allowed i.e. crossing the blk segment (5), blk segment end lies on the step line (3,4)
+        if(intersect > 2)	    // 3,4,5 are not allowed i.e. crossing the blk segment (5), blk segment end lies on the step line (3,4)
             return 0;   // return false
-        if(intersect){  // case 1 and 2
+        if(intersect==2){  // case 1 and 2
             // This has to be a port and final destination
             if (x2 == dstX && y2 == dstY && portExists(rm,x2,y2))
                 return 1;   // return true
             else
                 return 0;   // return false
+        }
+        else if(intersect==1){
+            return 1;   // p2 can lie on p1 q1 since p2 is the source. It was already allowed by the calling function
         }
         // Segment 3 is x1,y2 x2,y2 of blksegs
         intersect = doIntersect(segs->x1,segs->y2,segs->x2,segs->y2,x1,y1,x2,y2); // p1,q1,p2,q2
-        if(intersect && intersect > 2)	    // 3,4,5 are not allowed i.e. crossing the blk segment (5), blk segment end lies on the step line (3,4)
+        if(intersect > 2)	    // 3,4,5 are not allowed i.e. crossing the blk segment (5), blk segment end lies on the step line (3,4)
             return 0;   // return false
-        if(intersect){  // case 1 and 2
+        if(intersect==2){  // case 1 and 2
             // This has to be a port and final destination
             if (x2 == dstX && y2 == dstY && portExists(rm,x2,y2))
                 return 1;   // return true
             else
                 return 0;   // return false
         }
+        else if(intersect==1){
+            return 1;   // p2 can lie on p1 q1 since p2 is the source. It was already allowed by the calling function
+        }
         // Segment 4 is x2,y1 x2,y2 of blksegs
         intersect = doIntersect(segs->x2,segs->y1,segs->x2,segs->y2,x1,y1,x2,y2); // p1,q1,p2,q2
-        if(intersect && intersect > 2)	    // 3,4,5 are not allowed i.e. crossing the blk segment (5), blk segment end lies on the step line (3,4)
+        if(intersect > 2)	    // 3,4,5 are not allowed i.e. crossing the blk segment (5), blk segment end lies on the step line (3,4)
             return 0;   // return false
-        if(intersect){  // case 1 and 2
+        if(intersect==2){  // case 1 and 2
             // This has to be a port and final destination
             if (x2 == dstX && y2 == dstY && portExists(rm,x2,y2))
                 return 1;   // return true
             else
                 return 0;   // return false
+        }
+        else if(intersect==1){
+            return 1;   // p2 can lie on p1 q1 since p2 is the source. It was already allowed by the calling function
         }
 
         // Get the next blocking rectangle
@@ -1104,8 +1241,10 @@ static int newRoutingMatrix(lua_State *L) {
     static const struct luaL_Reg funcs[] = {
         {"addSegment", addSegment},
         {"removeSegment", removeSegment},
+        {"getSegment",getSegment},
         {"addBlockingRectangle", addBlockingRectangle},
         {"removeBlockingRectangle", removeBlockingRectangle},
+        {"getBlockingRectangle",getBlockingRectangle},
         {"addPort", addPort},
         {"removePort", removePort},
         {"validStep", validStep},
